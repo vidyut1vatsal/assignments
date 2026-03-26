@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# Create logs directory
+logs_dir="logs"
+mkdir -p "$logs_dir"
+
+# User input
+read -p "Enter your name: " username
+log_file="$logs_dir/logs_${username}.txt"
+
+echo "Welcome $username!"
+
+# Logging function
+log_entry() {
+    local message="$1"
+    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    echo "$username | $timestamp | $message" >> "$log_file"
+}
+
+while true
+do
+    read -p "Enter first number: " num1
+    read -p "Enter second number: " num2
+
+    echo "Choose operation:"
+    echo "+  Addition"
+    echo "-  Subtraction"
+    echo "*  Multiplication"
+    echo "/  Division"
+    echo "x  Exit"
+
+    read -p "Enter operator: " op
+
+    # Exit
+    if [ "$op" == "x" ]; then
+        echo "Exiting..."
+        log_entry "User exited the program"
+        break
+    fi
+
+    # Validate numbers
+    if ! [[ "$num1" =~ ^-?[0-9]+(\.[0-9]+)?$ && "$num2" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+        echo "Invalid input! Enter valid numbers."
+        log_entry "ERROR | Invalid input: $num1, $num2"
+        continue
+    fi
+
+    # Divide by zero check
+    if [ "$op" == "/" ] && [ "$num2" == "0" ]; then
+        echo "Error: Division by zero!"
+        log_entry "ERROR | Division by zero attempted: $num1 / $num2"
+        continue
+    fi
+
+    # Calculation
+    case $op in
+        +)
+            result=$(echo "$num1 + $num2" | bc)
+            operation="Addition"
+            ;;
+        -)
+            result=$(echo "$num1 - $num2" | bc)
+            operation="Subtraction"
+            ;;
+        \*)
+            result=$(echo "$num1 * $num2" | bc)
+            operation="Multiplication"
+            ;;
+        /)
+            result=$(printf "%.2f" "$(echo "$num1 / $num2" | bc -l)")
+            operation="Division"
+            ;;
+        *)
+            echo "Invalid operator!"
+            log_entry "ERROR | Invalid operator: $op"
+            continue
+            ;;
+    esac
+
+    echo "Result: $result"
+
+    # Log success
+    log_entry "$operation | $num1 $op $num2 = $result"
+
+done
